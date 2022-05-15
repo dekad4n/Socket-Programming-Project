@@ -47,13 +47,15 @@ namespace server
             {
                 IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, serverPort);
                 serverSocket.Bind(endPoint);
-                serverSocket.Listen(3); // hard coded clients, fix it
+                serverSocket.Listen(5);
 
                 listening = true;
                 listen_button.Enabled = false;
 
                 Thread acceptThread = new Thread(Accept);
                 acceptThread.Start();
+
+                textBox_port.Enabled = false;
 
                 logs.AppendText("Started listening on port: " + serverPort + "\n");
 
@@ -179,7 +181,6 @@ namespace server
                 {
                     Byte[] buffer = new Byte[128];
                     thisClient.Receive(buffer);
-                    Console.WriteLine("buffer");
                     string incomingMessage = Encoding.Default.GetString(buffer);
                     Console.WriteLine(incomingMessage);
 
@@ -209,7 +210,17 @@ namespace server
                         logs.AppendText( msg_splitted[1]+" has logged out...\n");
                         loginCount = 0;
                     }
-                    
+                    else if (msg_splitted[0] == "CreatePost")
+                    {
+                        createPost(msg_splitted[1], msg_splitted[2], connectedUsers[loginCount - 1]);
+                        sendNewPostMsg(createPostHeader + connectedUsers[loginCount - 1] + " you have created new post:\n" + msg_splitted[1], thisClient);
+
+                    }
+                    else if (msg_splitted[0] == "GetPosts")
+                    {
+                        sendPosts(connectedUsers[loginCount - 1], thisClient);
+                    }
+
 
 
                 }
@@ -230,7 +241,88 @@ namespace server
                 }
             }
         }
+        private void sendNewPostMsg(string msg, Socket thisClient)
+        {
+            try
+            {
+                Byte[] sender_buffer = Encoding.Default.GetBytes(msg);
+                thisClient.Send(sender_buffer);
+            }
+            catch
+            {
+                logs.AppendText("We couldn't react the user, but we created the post!\n");
 
-        
+
+            }
+
+        }
+        private void postByteSend(string msg, Socket thisClient)
+        {
+            try
+            {
+                msg = msg.PadRight(128, '\0');
+                Byte[] sender_buffer = Encoding.Default.GetBytes(msg);
+                int x = thisClient.Send(sender_buffer);
+                
+            }
+            catch
+            {
+                logs.AppendText("We couldn't react the user for post" + msg + " !\n");
+
+
+            }
+
+        }
+        private void createPost(string postContent, string postDate, string username)
+        {
+            // get post ID
+            string idCountString = File.ReadLines(@"../../posts.txt").First();
+            int firstLineInt = Int16.Parse(idCountString);
+            Console.WriteLine(postContent);
+            using (StreamWriter file = new StreamWriter(@"../../posts.txt", append: true))
+            {
+                file.WriteLine(username + "&" + (Int16.Parse(idCountString) + 1).ToString() + "&" + postDate + "&" + postContent);
+
+            }
+            string[] arrLine = File.ReadAllLines(@"../../posts.txt");
+            arrLine[0] = (firstLineInt + 1).ToString();
+            File.WriteAllLines(@"../../posts.txt", arrLine);
+
+            logs.AppendText(username + " has created new post:\n" + postContent + "\n");
+        }
+
+        private void sendPosts(string username, Socket thisClient)
+        {
+            logs.AppendText(username + " has requested send posts.\n");
+            string[] lines = File.ReadAllLines(@"../../posts.txt");
+            bool isFirstLine = true;
+            foreach (string line in lines)
+            {
+                if (isFirstLine)
+                {
+                    isFirstLine = false;
+
+                    continue;
+                }
+                Console.WriteLine(line);
+
+                string[] lineDivided = line.Split('&');
+                if (lineDivided[0] != username)
+                {
+                    try
+                    {
+                        postByteSend(getPostHeader + lineDivided[0] + "\n" + lineDivided[1] + "\n" + lineDivided[2] + "\n" + lineDivided[3] + "\n\n", thisClient);
+                        logs.AppendText("Post sent: \n" + "username: " + lineDivided[0] + "\n" + "post ID:" +lineDivided[1] + "\n" + "post date:" + lineDivided[2] + "\n" + "post: " +lineDivided[3] + "\n\n");
+                    }
+                    catch
+                    {
+                        Console.WriteLine("err");
+                    }
+                }
+
+            }
+        }
+
+
     }
 }

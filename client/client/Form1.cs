@@ -48,6 +48,7 @@ namespace client
             int portNum;
             if (Int32.TryParse(textBox_port.Text, out portNum))
             {
+
                 try
                 {
                     rejectedLogin = false;
@@ -56,6 +57,12 @@ namespace client
                     {
                         logs.AppendText("Please enter your username!\n");
                         return;
+                    }
+                    if(textBox_ip.Text.Length == 0 )
+                    {
+                        logs.AppendText("Please enter an IP address!!\n");
+                        return;
+
                     }
                     clientSocket.Connect(IP, portNum);
 
@@ -76,7 +83,7 @@ namespace client
                 }
                 catch
                 {
-                    logs.AppendText(username_area + " server is not responding, we cannot check if username is valid.\n");
+                    logs.AppendText(username_area.Text + " server is not responding, we cannot check if username is valid.\n");
                 }
             }
             else
@@ -103,7 +110,7 @@ namespace client
                     // if i send login
                     if (msg_splitted[0] == "AcceptLogin") 
                     {
-                        
+
                         currentUsername = msg_splitted[1].Split(' ')[0];
 
                         button_connect.Enabled = false;
@@ -111,6 +118,12 @@ namespace client
                         textBox_ip.Enabled = false;
                         textBox_port.Enabled = false;
                         button_disconnect.Enabled = true;
+
+                        button_create_post.Enabled = true;
+                        textBox_createPost.Enabled = true;
+
+                        button_get_posts.Enabled = true;
+                        logs.AppendText(msg_splitted[1] + "\n");
                     }
                     else if (msg_splitted[0] == "RejectLogin")
                     {
@@ -120,6 +133,12 @@ namespace client
                         textBox_ip.Enabled = true;
                         textBox_port.Enabled = true;
                         button_disconnect.Enabled = false;
+
+                        button_create_post.Enabled = false;
+                        textBox_createPost.Enabled = false;
+
+                        button_get_posts.Enabled = false;
+
                         rejectedLogin = true;
                         username_area.Clear();
                         // print logout server msg
@@ -133,11 +152,20 @@ namespace client
                         {
                         }
                         connected = false;
+                        logs.AppendText(msg_splitted[1] + "\n");
 
+                    }
+                    else if (msg_splitted[0] == "CreatePost")
+                    {
+                        logs.AppendText(msg_splitted[1] + "\n" + msg_splitted[2] + "\n");
+                        textBox_createPost.Clear();
+                    }
+                    else if (msg_splitted[0] == "GetPosts")
+                    {
+                        logs.AppendText("username: " + msg_splitted[1] + "\n" + "Post ID: " + msg_splitted[2] + "\n" + "Date: " + msg_splitted[3] + "\nPost:" + msg_splitted[4] + "\n\n");
                     }
 
                     // Print servers msg if not logout
-                    logs.AppendText(msg_splitted[1] + "\n");
                 }
                 catch
                 {
@@ -148,6 +176,9 @@ namespace client
                         // connection state front
                         button_connect.Enabled = true;
                         button_disconnect.Enabled = false;
+                        button_get_posts.Enabled = false;
+                        button_create_post.Enabled = false;
+                        textBox_createPost.Enabled = false;
                         textBox_ip.Enabled = true;
                         textBox_port.Enabled = true;
                         username_area.Enabled = true;
@@ -165,7 +196,7 @@ namespace client
 
         private void button_disconnect_Click(object sender, EventArgs e)
         {
-            if(!terminating)
+            if (!terminating)
             {
                 try
                 {
@@ -173,28 +204,32 @@ namespace client
                     clientSocket.Close();
                     logs.AppendText("You are disconnected from the server\n");
 
-                    
+
                     didIDisc = true;
 
                     // Handle frontend
-                        // connection buttons
+                    // connection buttons
                     button_connect.Enabled = true;
                     button_disconnect.Enabled = false;
-                        // connection text boxes
+                    // connection text boxes
                     textBox_ip.Enabled = true;
                     textBox_port.Enabled = true;
-                        // login text boxes
+                    // login text boxes
                     username_area.Enabled = true;
-                        // login buttons
+                    // login buttons
                     button_disconnect.Enabled = false;
+
+                    button_create_post.Enabled = false;
+                    button_get_posts.Enabled = false;
+                    textBox_createPost.Enabled = false;
                 }
                 catch
                 {
                     logs.AppendText("Something happened when disconnecting...\n");
                 }
-                
+
             }
-            
+
 
         }
 
@@ -218,6 +253,47 @@ namespace client
             }
         }
 
-       
+        private void button_create_post_Click(object sender, EventArgs e)
+        {
+            string post = textBox_createPost.Text;
+            if (post.Length != 0)
+            {
+                if (post.Contains("&"))
+                {
+                    logs.AppendText("Posts cannot include ampersand\n");
+                    return;
+                }
+                string time = DateTime.Now.ToString("MM/dd/yyyy h:mm tt");
+
+                try
+                {
+                    Byte[] buffer = Encoding.Default.GetBytes(createPostHeader + post + "\n" + time);
+                    clientSocket.Send(buffer); // send login request
+                }
+                catch
+                {
+                    logs.AppendText("Something happened while posting...\n");
+                }
+            }
+            else
+            {
+                logs.AppendText("Posts cannot be empty!\n");
+            }
+        }
+
+        private void button_get_posts_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string message = getPostHeader;
+                Byte[] buffer = Encoding.Default.GetBytes(message);
+                clientSocket.Send(buffer);
+                logs.AppendText("Posts\n");
+            }
+            catch
+            {
+                logs.AppendText("Something happened while getting posts...\n");
+            }
+        }
     }
 }

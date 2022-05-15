@@ -40,6 +40,9 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
+            this.textBox_createPost = new System.Windows.Forms.TextBox();
+            this.button_create_post = new System.Windows.Forms.Button();
+            this.button_get_posts = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // textBox_ip
@@ -146,11 +149,44 @@
             this.label6.Size = new System.Drawing.Size(0, 24);
             this.label6.TabIndex = 16;
             // 
+            // textBox_createPost
+            // 
+            this.textBox_createPost.Enabled = false;
+            this.textBox_createPost.Location = new System.Drawing.Point(54, 518);
+            this.textBox_createPost.Name = "textBox_createPost";
+            this.textBox_createPost.Size = new System.Drawing.Size(256, 31);
+            this.textBox_createPost.TabIndex = 17;
+            // 
+            // button_create_post
+            // 
+            this.button_create_post.Enabled = false;
+            this.button_create_post.Location = new System.Drawing.Point(326, 494);
+            this.button_create_post.Name = "button_create_post";
+            this.button_create_post.Size = new System.Drawing.Size(151, 85);
+            this.button_create_post.TabIndex = 18;
+            this.button_create_post.Text = "Create Post";
+            this.button_create_post.UseVisualStyleBackColor = true;
+            this.button_create_post.Click += new System.EventHandler(this.button_create_post_Click);
+            // 
+            // button_get_posts
+            // 
+            this.button_get_posts.Enabled = false;
+            this.button_get_posts.Location = new System.Drawing.Point(86, 644);
+            this.button_get_posts.Name = "button_get_posts";
+            this.button_get_posts.Size = new System.Drawing.Size(199, 56);
+            this.button_get_posts.TabIndex = 19;
+            this.button_get_posts.Text = "Get Posts";
+            this.button_get_posts.UseVisualStyleBackColor = true;
+            this.button_get_posts.Click += new System.EventHandler(this.button_get_posts_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(843, 780);
+            this.Controls.Add(this.button_get_posts);
+            this.Controls.Add(this.button_create_post);
+            this.Controls.Add(this.textBox_createPost);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
@@ -184,6 +220,9 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.TextBox textBox_createPost;
+        private System.Windows.Forms.Button button_create_post;
+        private System.Windows.Forms.Button button_get_posts;
     }
 }
 
