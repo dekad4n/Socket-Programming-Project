@@ -12,6 +12,7 @@ using System.Windows.Forms;
 
 namespace client
 {
+    
     public partial class Form1 : Form
     {
         // Connection elements
@@ -23,7 +24,12 @@ namespace client
         string loginheader = "Log-in\n";// login request
         string getPostHeader = "GetPosts\n"; // get post request
         string createPostHeader = "CreatePost\n"; // create post request
-
+        string getMyPostsHeader = "GetMyPosts\n";
+        string getFriendsPostsHeader = "GetFriendsPosts\n";
+        string deletePostHeader = "DeletePost\n";
+        string getFriendsHeader = "GetFriends\n";
+        string addFriendHeader = "AddFriend\n";
+        string removeFriendHeader = "RemoveFriend\n";
         string currentUsername = "";
         // my socket
         Socket clientSocket;
@@ -93,6 +99,36 @@ namespace client
         }
         bool rejectedLogin = false;
 
+
+        private void stateHandler(bool state)
+        {
+            // login handlers
+            button_connect.Enabled = !state;
+            username_area.Enabled = !state;
+            textBox_ip.Enabled = !state;
+            textBox_port.Enabled = !state;
+            button_disconnect.Enabled = state;
+
+
+            // post handlers
+            deletePost_area.Enabled = state;
+            button_deletePost.Enabled = state;
+            button_myPostsbutton_myPosts.Enabled = state;
+            button_create_post.Enabled = state;
+            textBox_createPost.Enabled = state;
+            button_friendsPosts.Enabled = state;
+            button_get_posts.Enabled = state;
+
+            //  friend handlers
+            button_removeFriend.Enabled = state;
+            button_addFriend.Enabled = state;
+            addFriend_area.Enabled = state;
+            friends_area.Enabled = state;
+
+            friends_area.Items.Clear();
+
+        }
+
         private void Receive()
         {
             while (connected)
@@ -112,32 +148,26 @@ namespace client
                     {
 
                         currentUsername = msg_splitted[1].Split(' ')[0];
+                        stateHandler(true);
 
-                        button_connect.Enabled = false;
-                        username_area.Enabled = false;
-                        textBox_ip.Enabled = false;
-                        textBox_port.Enabled = false;
-                        button_disconnect.Enabled = true;
 
-                        button_create_post.Enabled = true;
-                        textBox_createPost.Enabled = true;
-
-                        button_get_posts.Enabled = true;
                         logs.AppendText(msg_splitted[1] + "\n");
+                        try
+                        {
+                            Byte[] friendsBuffer = Encoding.Default.GetBytes(getFriendsHeader);
+                            clientSocket.Send(friendsBuffer);
+                        }
+                        catch
+                        {
+                            logs.AppendText("Something while getting friends...\n");
+                        }
+
                     }
                     else if (msg_splitted[0] == "RejectLogin")
                     {
                         // handle login state
-                        username_area.Enabled = true;
-                        button_connect.Enabled = true;
-                        textBox_ip.Enabled = true;
-                        textBox_port.Enabled = true;
-                        button_disconnect.Enabled = false;
+                        stateHandler(false);
 
-                        button_create_post.Enabled = false;
-                        textBox_createPost.Enabled = false;
-
-                        button_get_posts.Enabled = false;
 
                         rejectedLogin = true;
                         username_area.Clear();
@@ -164,6 +194,41 @@ namespace client
                     {
                         logs.AppendText("username: " + msg_splitted[1] + "\n" + "Post ID: " + msg_splitted[2] + "\n" + "Date: " + msg_splitted[3] + "\nPost:" + msg_splitted[4] + "\n\n");
                     }
+                    else if(msg_splitted[0] == "DeletePost")
+                    {
+                        logs.AppendText(msg_splitted[1] + "\n");
+                    }
+                    else if(msg_splitted[0] == "AddFriend")
+                    {
+                        logs.AppendText(msg_splitted[1] + "\n");
+                    }
+                    else if(msg_splitted[0] == "GetFriends")
+                    {
+                        friends_area.Items.Add(msg_splitted[1]);
+                    }
+                    else if(msg_splitted[0] == "RemoveFriend")
+                    {
+                        if(msg_splitted[1] != "No friendship relationship")
+                        {
+                            friends_area.Items.Remove(msg_splitted[2]);
+                        }
+                        logs.AppendText(msg_splitted[1]);
+                    }
+                    else if(msg_splitted[0] == "AddedYou")
+                    {
+                        logs.AppendText(msg_splitted[1] + " added you as friend\n");
+                        friends_area.Items.Add(msg_splitted[1]);
+                    }
+                    else if (msg_splitted[0] == "RemovedYou")
+                    {
+                        logs.AppendText(msg_splitted[1] + " removed you from friends\n");
+                        friends_area.Items.Remove(msg_splitted[1]);
+                    }
+                    else if(msg_splitted[0] == "CustomMessage")
+                    {
+                        logs.AppendText(msg_splitted[1] + "\n");
+                    }
+
 
                     // Print servers msg if not logout
                 }
@@ -174,15 +239,8 @@ namespace client
                         logs.AppendText("The server has disconnected\n");
 
                         // connection state front
-                        button_connect.Enabled = true;
-                        button_disconnect.Enabled = false;
-                        button_get_posts.Enabled = false;
-                        button_create_post.Enabled = false;
-                        textBox_createPost.Enabled = false;
-                        textBox_ip.Enabled = true;
-                        textBox_port.Enabled = true;
-                        username_area.Enabled = true;
-                        
+                        stateHandler(false);
+
                     }
                     connected = false;
                     clientSocket.Close();
@@ -207,21 +265,9 @@ namespace client
 
                     didIDisc = true;
 
-                    // Handle frontend
-                    // connection buttons
-                    button_connect.Enabled = true;
-                    button_disconnect.Enabled = false;
-                    // connection text boxes
-                    textBox_ip.Enabled = true;
-                    textBox_port.Enabled = true;
-                    // login text boxes
-                    username_area.Enabled = true;
-                    // login buttons
-                    button_disconnect.Enabled = false;
 
-                    button_create_post.Enabled = false;
-                    button_get_posts.Enabled = false;
-                    textBox_createPost.Enabled = false;
+                    stateHandler(false);
+
                 }
                 catch
                 {
@@ -293,6 +339,112 @@ namespace client
             catch
             {
                 logs.AppendText("Something happened while getting posts...\n");
+            }
+        }
+
+        private void button_myPostsbutton_myPosts_Click(object sender, EventArgs e)
+        {
+            string message = getMyPostsHeader + username_area.Text; 
+
+            if (message != "" && message.Length <= 128)
+            {
+                try
+                {
+                    Byte[] buffer = Encoding.Default.GetBytes(message);
+                    clientSocket.Send(buffer); 
+                }
+                catch
+                {
+                    logs.AppendText("Something while getting your posts...\n");
+                }
+            }
+        }
+
+        private void button_deletePost_Click(object sender, EventArgs e)
+        {
+            int postID = -1;
+            if (Int32.TryParse(deletePost_area.Text, out postID))
+            {
+                string message = deletePostHeader + deletePost_area.Text;
+
+                if (message != "" && message.Length <= 128)
+                {
+                    try
+                    {
+                        Byte[] buffer = Encoding.Default.GetBytes(message);
+                        clientSocket.Send(buffer);
+                    }
+                    catch
+                    {
+                        logs.AppendText("Something while getting your posts...\n");
+                    }
+                }
+            }
+            else
+            {
+                logs.AppendText("Invalid post ID!");
+            }
+        }
+
+        private void button_addFriend_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string message = addFriendHeader + addFriend_area.Text;
+
+                if (message != "" && message.Length <= 128)
+                {
+                    try
+                    {
+                        Byte[] buffer = Encoding.Default.GetBytes(message);
+                        clientSocket.Send(buffer);
+                    }
+                    catch
+                    {
+                        logs.AppendText("Something while getting adding freiend...\n");
+                    }
+                }
+            }
+            catch
+            {
+
+            }
+        }
+
+        private void button_removeFriend_Click(object sender, EventArgs e)
+        {
+            int curItem = friends_area.SelectedIndex;
+
+            if(curItem == -1)
+            {
+                logs.AppendText("You should choose a friend to remove!\n");
+
+            }
+            else
+            {
+                try
+                {
+                    Byte[] buffer = Encoding.Default.GetBytes(removeFriendHeader + friends_area.Items[curItem].ToString());
+                    clientSocket.Send(buffer);
+                }
+                catch
+                {
+                    logs.AppendText("Something while removing friends...\n");
+                }
+            }
+            
+        }
+
+        private void button_friendsPosts_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Byte[] buffer = Encoding.Default.GetBytes(getFriendsPostsHeader);
+                clientSocket.Send(buffer);
+            }
+            catch
+            {
+                logs.AppendText("Something while getting friends' post...\n");
             }
         }
     }

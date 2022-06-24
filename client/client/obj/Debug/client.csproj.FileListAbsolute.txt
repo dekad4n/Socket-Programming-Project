@@ -25,3 +25,12 @@ C:\Users\Sadi\Desktop\clone\Socket-Programming-Project\client\client\obj\Debug\c
 C:\Users\Sadi\Desktop\clone\Socket-Programming-Project\client\client\obj\Debug\client.Form1.resources
 C:\Users\Sadi\Desktop\clone\Socket-Programming-Project\client\client\obj\Debug\client.Properties.Resources.resources
 C:\Users\Sadi\Desktop\clone\Socket-Programming-Project\client\client\obj\Debug\client.csproj.GenerateResource.Cache
+C:\Users\Sadi\Desktop\last\sadigulbey_Gulbey_Sadi_Step1\client\client\bin\Debug\client.exe.config
+C:\Users\Sadi\Desktop\last\sadigulbey_Gulbey_Sadi_Step1\client\client\obj\Debug\client.exe
+C:\Users\Sadi\Desktop\last\sadigulbey_Gulbey_Sadi_Step1\client\client\obj\Debug\client.pdb
+C:\Users\Sadi\Desktop\last\sadigulbey_Gulbey_Sadi_Step1\client\client\bin\Debug\client.exe
+C:\Users\Sadi\Desktop\last\sadigulbey_Gulbey_Sadi_Step1\client\client\bin\Debug\client.pdb
+C:\Users\Sadi\Desktop\last\sadigulbey_Gulbey_Sadi_Step1\client\client\obj\Debug\client.csprojResolveAssemblyReference.cache
+C:\Users\Sadi\Desktop\last\sadigulbey_Gulbey_Sadi_Step1\client\client\obj\Debug\client.Form1.resources
+C:\Users\Sadi\Desktop\last\sadigulbey_Gulbey_Sadi_Step1\client\client\obj\Debug\client.Properties.Resources.resources
+C:\Users\Sadi\Desktop\last\sadigulbey_Gulbey_Sadi_Step1\client\client\obj\Debug\client.csproj.GenerateResource.Cache

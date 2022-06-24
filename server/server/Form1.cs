@@ -14,6 +14,168 @@ using System.Windows.Forms;
 
 namespace server
 {
+    class Friends
+    {
+        public Friends(string username)
+        {
+            myUsername = username;
+        }
+        public List<string> getMyFriends()
+        {
+            string[] lines = File.ReadAllLines(@"../../friends.txt");
+            List<string> friends = new List<string>();
+            foreach (string line in lines)
+            {
+
+                string[] lineDivided = line.Split('&');
+                if (lineDivided[0] == myUsername || lineDivided[1] == myUsername)
+                {
+                    friends.Add(lineDivided[0] == myUsername ? lineDivided[1] : lineDivided[0]);
+                }
+
+            }
+            Console.WriteLine(friends.Count);
+            return friends;
+        }
+
+        public string addFriend(string otherUsername)
+        {
+            bool isInDatabase = checkUserInDatabase(otherUsername);
+            if(otherUsername == myUsername)
+            {
+                return otherUsername + " you cannot add yourself as friend...";
+            }
+
+            if (!isInDatabase)
+            {
+                return "User that you are trying to add is not in database!";
+            }
+            string[] lines = File.ReadAllLines(@"../../friends.txt");
+            foreach (string line in lines)
+            {
+                string[] line_splitted = line.Split('&'); 
+                if ((line_splitted[0] == otherUsername &&  line_splitted[1] == myUsername) ||(line_splitted[1] == otherUsername && line_splitted[0] == myUsername))
+                {
+                    return "You are already friends with " + otherUsername;
+                }
+            }
+            using (StreamWriter file = new StreamWriter(@"../../friends.txt", append: true))
+            {
+                file.WriteLine(myUsername + "&"  + otherUsername);
+
+            }
+            return "You have successfully added " + otherUsername;
+        }
+        public string removeFriend(string otherUsername)
+        {
+            bool didIDelete = false;
+            var tempFile = Path.GetTempFileName();
+            var linesToKeep = File.ReadLines(@"../../friends.txt").Where(
+                current =>
+                {
+                 
+                    string[] currentLine = current.Split('&'); // split line with &
+                    if ((otherUsername == currentLine[1] && myUsername == currentLine[0]) || (otherUsername == currentLine[0] && myUsername == currentLine[1]))
+                    {
+                        didIDelete = true;
+
+                        return false;
+                    }
+                    return true; // do not delete
+                }
+                );
+
+            File.WriteAllLines(tempFile, linesToKeep);
+
+            File.Delete(@"../../friends.txt");
+            File.Move(tempFile, @"../../friends.txt");
+            if(didIDelete)
+            {
+                return otherUsername;
+            }
+            return "NOT OK";
+        }
+        private bool postByteSend(string msg, Socket thisClient)
+        {
+            try
+            {
+                msg = msg.PadRight(128, '\0');
+                Byte[] sender_buffer = Encoding.Default.GetBytes(msg);
+                int x = thisClient.Send(sender_buffer);
+
+            }
+            catch
+            {
+                return false;
+
+
+            }
+            return true;
+        }
+        private bool checkUserInDatabase(string otherUsername)
+        {
+            string[] lines = File.ReadAllLines(@"../../user-db.txt");
+            foreach (string line in lines)
+            {
+                if (line == otherUsername)
+                {
+                    return true;
+                }
+
+            }
+            return false;
+        }
+
+        public bool sendFriendsPosts(Socket thisClient)
+        {
+            List<string> friendsList = getMyFriends();
+
+            try
+            {
+                string msg = ("CustomMessage\n" +"Your friends posts\n" ).PadRight(128, '\0');
+                Byte[] sender_buffer = Encoding.Default.GetBytes(msg);
+                int x = thisClient.Send(sender_buffer);
+
+            }
+            catch
+            {
+            }
+            bool isFirstLine = true;
+            bool allPostsSent = true;
+            string[] lines = File.ReadAllLines(@"../../posts.txt");
+            foreach (string line in lines)
+            {
+                if (isFirstLine)
+                {
+                    isFirstLine = false;
+
+                    continue;
+                }
+
+                string[] lineDivided = line.Split('&');
+                if (friendsList.Contains(lineDivided[0]))
+                {
+                    try
+                    {
+                        bool temp = postByteSend("GetPosts\n" + lineDivided[0] + "\n" + lineDivided[1] + "\n" + lineDivided[2] + "\n" + lineDivided[3] + "\n\n", thisClient);
+                        if(!temp)
+                        {
+                            allPostsSent = false;
+                        }
+                    }
+                    catch
+                    {
+                        allPostsSent = false;
+                    }
+                }
+
+            }
+
+            return allPostsSent;
+
+        }
+        private string myUsername;
+    }
     public partial class Form1 : Form
     {
         Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -26,6 +188,10 @@ namespace server
         string logoutheader = "AcceptLogout\n";
         string getPostHeader = "GetPosts\n";
         string createPostHeader = "CreatePost\n";
+        string deletePostHeader = "DeletePost\n";
+        string addFriendHeader = "AddFriend\n";
+        string removeFriendHeader = "RemoveFriend\n";
+        string getFriendsHeader = "GetFriends\n";
         public Form1()
         {
             Control.CheckForIllegalCrossThreadCalls = false;
@@ -182,7 +348,6 @@ namespace server
                     Byte[] buffer = new Byte[128];
                     thisClient.Receive(buffer);
                     string incomingMessage = Encoding.Default.GetString(buffer);
-                    Console.WriteLine(incomingMessage);
 
                     incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
 
@@ -198,6 +363,7 @@ namespace server
                             clientSockets.Remove(thisClient);
                             break;
                         }
+                        Friends myFriends = new Friends(connectedUsers[loginCount - 1]);
                         
                     }
                     else if(msg_splitted[0] == "Log-out")
@@ -220,7 +386,30 @@ namespace server
                     {
                         sendPosts(connectedUsers[loginCount - 1], thisClient);
                     }
-
+                    else if(msg_splitted[0] == "GetMyPosts")
+                    {
+                        sendMyPosts(msg_splitted[1], thisClient);
+                    }
+                    else if(msg_splitted[0] == "DeletePost")
+                    {
+                        deletePost(msg_splitted[1], thisClient, connectedUsers[loginCount - 1]);
+                    }
+                    else if(msg_splitted[0] == "AddFriend")
+                    {
+                        addFriend(connectedUsers[loginCount - 1], msg_splitted[1], thisClient);
+                    }
+                    else if(msg_splitted[0] == "GetFriends")
+                    {
+                        sendFriends(connectedUsers[loginCount-1], thisClient);
+                    }
+                    else if(msg_splitted[0] == "RemoveFriend")
+                    {
+                        removeFriend(connectedUsers[loginCount - 1],msg_splitted[1] ,thisClient);
+                    }
+                    else if(msg_splitted[0] == "GetFriendsPosts")
+                    {
+                        getFriendsPosts(connectedUsers[loginCount - 1], thisClient);
+                    }
 
 
                 }
@@ -239,6 +428,209 @@ namespace server
                     clientSockets.Remove(thisClient);
                     connected = false;
                 }
+            }
+        }
+        private void getFriendsPosts(string username, Socket thisClient)
+        {
+            logs.AppendText(username + " has requested to send friends post!\n");
+            Friends myFriends = new Friends(username);
+
+            bool allPostsSent = myFriends.sendFriendsPosts(thisClient);
+
+            if(allPostsSent)
+            {
+                logs.AppendText("All of friends' posts send to " + username + "\n");
+            }
+            else
+            {
+                logs.AppendText("Not all of friends' posts send to " + username + "\n");
+
+            }
+
+
+        }
+        private void removeFriend(string username, string removedFriend, Socket thisClient)
+        {
+            logs.AppendText(username + " wants to remove friend with " + removedFriend + "\n");
+            Friends myFriends = new Friends(username);
+
+            string result = myFriends.removeFriend(removedFriend);
+            string msg = removeFriendHeader;
+            if(result == "NOT OK")
+            {
+                logs.AppendText(username + " and " + removedFriend + " has no relationship, nothing happened\n");
+                try
+                {
+                    msg = msg + "No friendship relationship";
+                    msg = msg.PadRight(128, '\0');
+                    Byte[] sender_buffer = Encoding.Default.GetBytes(msg);
+                    int x = thisClient.Send(sender_buffer);
+
+                    
+                }
+                catch
+                {
+                    logs.AppendText("We couldn't react the user for unsuccessful remove friend!\n");
+                }
+            }
+            else
+            {
+                logs.AppendText("Successfully removed relationship with " + result + "\n");
+                try
+                {
+                    msg = msg + "Successfully removed relationship with " + result + "\n";
+                    msg = msg + result;
+                    msg = msg.PadRight(128, '\0');
+                    Byte[] sender_buffer = Encoding.Default.GetBytes(msg);
+                    int x = thisClient.Send(sender_buffer);
+
+                    int idx = isConnected(removedFriend);
+                    if (idx != -1)
+                    {
+                        msg = "RemovedYou\n" + username.PadRight(128, '\0');
+                        Byte[] addedYou = Encoding.Default.GetBytes(msg);
+                        clientSockets[idx].Send(addedYou);
+                    }
+                }
+                catch
+                {
+                    logs.AppendText("We couldn't react the user for successful remove friend!\n");
+                }
+            }
+        }
+        private void sendFriends(string username, Socket thisClient)
+        {
+            Friends myFriends = new Friends(username);
+
+            List<string> friendsList = myFriends.getMyFriends();
+
+            foreach(string friend in friendsList)
+            {
+                try
+                {
+                    string msg = (getFriendsHeader + friend).PadRight(128, '\0');
+                    Byte[] sender_buffer = Encoding.Default.GetBytes(msg);
+                    int x = thisClient.Send(sender_buffer);
+
+                }
+                catch
+                {
+                    logs.AppendText("We couldn't react the user for sending " + friend + " !\n");
+
+                }
+            }
+        }
+
+        private int isConnected(string username)
+        {
+            for(int i = 0; i < connectedUsers.Count; i++)
+            {
+                if(username == connectedUsers[i])
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        private void addFriend(string myUsername, string otherUsername, Socket thisClient)
+        {
+            logs.AppendText(myUsername + " wants to be friends with " + otherUsername + "\n");
+            Friends myFriends = new Friends(myUsername);
+            string res = myFriends.addFriend(otherUsername);
+            string msg = addFriendHeader + res ;
+            try
+            {
+                msg = msg.PadRight(128, '\0');
+                Byte[] sender_buffer = Encoding.Default.GetBytes(msg);
+                Console.WriteLine(msg);
+                int x = thisClient.Send(sender_buffer);
+
+                if(msg.Contains("success"))
+                {
+                    msg = getFriendsHeader + otherUsername.PadRight(128, '\0');
+                    Byte[] friendSender = Encoding.Default.GetBytes(msg);
+                    int y = thisClient.Send(friendSender);
+                    logs.AppendText(myUsername + " successfully added " + otherUsername + "\n");
+
+                    int idx = isConnected(otherUsername);
+                    if (idx != -1)
+                    {
+                        msg = "AddedYou\n" +myUsername.PadRight(128, '\0');
+                        Byte[] addedYou = Encoding.Default.GetBytes(msg);
+                        clientSockets[idx].Send(addedYou);
+                    }
+                }
+                else
+                {
+                    logs.AppendText(myUsername + " wanted to be friends with " + otherUsername + " but got this error: " + res + "\n");
+
+                }
+
+            }
+            catch
+            {
+                logs.AppendText("We couldn't inform user about: " + msg + " !\n");
+
+
+            }
+
+        }
+        private void deletePost(string postID, Socket thisClient, string username)
+        {
+            logs.AppendText(username + " wants to delete post with ID " + postID.ToString() + "\n");
+            bool isThereSuchPost = false;
+            bool isOwnedbyUser = false;
+            bool isFirstLine = true;
+            var tempFile = Path.GetTempFileName();
+            var linesToKeep = File.ReadLines(@"../../posts.txt").Where(
+                current =>
+                {
+                    if(isFirstLine)
+                    {
+                        isFirstLine = false;
+                        return true; // skip the first line
+                    }
+                    string[] currentLine = current.Split('&'); // split line with &
+
+                    if(postID == currentLine[1])
+                    {
+                        isThereSuchPost = true;
+                        if(currentLine[0] == username)
+                        {
+                            isOwnedbyUser = true;
+                            return false;
+                        }
+                        else
+                        {
+                            return true; // do not delete
+                        }
+                    }
+                    return true; // do not delete
+                }
+                );
+
+            File.WriteAllLines(tempFile, linesToKeep);
+
+            File.Delete(@"../../posts.txt");
+            File.Move(tempFile, @"../../posts.txt");
+
+            if(isOwnedbyUser)
+            {
+                postByteSend(deletePostHeader + "Post with ID " + postID + " is deleted successfully.",thisClient);
+                logs.AppendText(username + " deleted post with ID " + postID + " successfully.\n");
+                return;
+            }
+            else if(!isThereSuchPost)
+            {
+                postByteSend(deletePostHeader + "There is no post with ID " + postID + ".", thisClient);
+                logs.AppendText(username + " wanted to delete post with ID " + postID + " but there is no such post.\n");
+                return;
+            }
+            else if(!isOwnedbyUser)
+            {
+                postByteSend(deletePostHeader + "The post with ID " + postID + " does not belong to you.", thisClient);
+                logs.AppendText(username + " wanted to delete post with ID " + postID + " but the owner is different.\n");
+                return;
             }
         }
         private void sendNewPostMsg(string msg, Socket thisClient)
@@ -278,7 +670,6 @@ namespace server
             // get post ID
             string idCountString = File.ReadLines(@"../../posts.txt").First();
             int firstLineInt = Int16.Parse(idCountString);
-            Console.WriteLine(postContent);
             using (StreamWriter file = new StreamWriter(@"../../posts.txt", append: true))
             {
                 file.WriteLine(username + "&" + (Int16.Parse(idCountString) + 1).ToString() + "&" + postDate + "&" + postContent);
@@ -291,6 +682,37 @@ namespace server
             logs.AppendText(username + " has created new post:\n" + postContent + "\n");
         }
 
+
+        private void sendMyPosts(string username, Socket thisClient)
+        {
+            logs.AppendText(username + " has requested send its own posts.\n");
+            string[] lines = File.ReadAllLines(@"../../posts.txt");
+            bool isFirstLine = true;
+            foreach (string line in lines)
+            {
+                if (isFirstLine)
+                {
+                    isFirstLine = false;
+
+                    continue;
+                }
+
+                string[] lineDivided = line.Split('&');
+                if (lineDivided[0] == username)
+                {
+                    try
+                    {
+                        postByteSend(getPostHeader + lineDivided[0] + "\n" + lineDivided[1] + "\n" + lineDivided[2] + "\n" + lineDivided[3] + "\n\n", thisClient);
+                        logs.AppendText("Post sent: \n" + "username: " + lineDivided[0] + "\n" + "post ID:" + lineDivided[1] + "\n" + "post date:" + lineDivided[2] + "\n" + "post: " + lineDivided[3] + "\n\n");
+                    }
+                    catch
+                    {
+                        Console.WriteLine("err");
+                    }
+                }
+
+            }
+        }
         private void sendPosts(string username, Socket thisClient)
         {
             logs.AppendText(username + " has requested send posts.\n");
@@ -304,7 +726,6 @@ namespace server
 
                     continue;
                 }
-                Console.WriteLine(line);
 
                 string[] lineDivided = line.Split('&');
                 if (lineDivided[0] != username)

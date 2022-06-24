@@ -43,6 +43,14 @@
             this.textBox_createPost = new System.Windows.Forms.TextBox();
             this.button_create_post = new System.Windows.Forms.Button();
             this.button_get_posts = new System.Windows.Forms.Button();
+            this.button_myPostsbutton_myPosts = new System.Windows.Forms.Button();
+            this.button_friendsPosts = new System.Windows.Forms.Button();
+            this.deletePost_area = new System.Windows.Forms.TextBox();
+            this.button_deletePost = new System.Windows.Forms.Button();
+            this.button_addFriend = new System.Windows.Forms.Button();
+            this.addFriend_area = new System.Windows.Forms.TextBox();
+            this.friends_area = new System.Windows.Forms.ListBox();
+            this.button_removeFriend = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // textBox_ip
@@ -152,7 +160,7 @@
             // textBox_createPost
             // 
             this.textBox_createPost.Enabled = false;
-            this.textBox_createPost.Location = new System.Drawing.Point(54, 518);
+            this.textBox_createPost.Location = new System.Drawing.Point(54, 494);
             this.textBox_createPost.Name = "textBox_createPost";
             this.textBox_createPost.Size = new System.Drawing.Size(256, 31);
             this.textBox_createPost.TabIndex = 17;
@@ -160,9 +168,9 @@
             // button_create_post
             // 
             this.button_create_post.Enabled = false;
-            this.button_create_post.Location = new System.Drawing.Point(326, 494);
+            this.button_create_post.Location = new System.Drawing.Point(326, 487);
             this.button_create_post.Name = "button_create_post";
-            this.button_create_post.Size = new System.Drawing.Size(151, 85);
+            this.button_create_post.Size = new System.Drawing.Size(151, 45);
             this.button_create_post.TabIndex = 18;
             this.button_create_post.Text = "Create Post";
             this.button_create_post.UseVisualStyleBackColor = true;
@@ -171,19 +179,108 @@
             // button_get_posts
             // 
             this.button_get_posts.Enabled = false;
-            this.button_get_posts.Location = new System.Drawing.Point(86, 644);
+            this.button_get_posts.Location = new System.Drawing.Point(40, 700);
             this.button_get_posts.Name = "button_get_posts";
             this.button_get_posts.Size = new System.Drawing.Size(199, 56);
             this.button_get_posts.TabIndex = 19;
-            this.button_get_posts.Text = "Get Posts";
+            this.button_get_posts.Text = "All Posts";
             this.button_get_posts.UseVisualStyleBackColor = true;
             this.button_get_posts.Click += new System.EventHandler(this.button_get_posts_Click);
+            // 
+            // button_myPostsbutton_myPosts
+            // 
+            this.button_myPostsbutton_myPosts.Enabled = false;
+            this.button_myPostsbutton_myPosts.Location = new System.Drawing.Point(278, 700);
+            this.button_myPostsbutton_myPosts.Name = "button_myPostsbutton_myPosts";
+            this.button_myPostsbutton_myPosts.Size = new System.Drawing.Size(199, 56);
+            this.button_myPostsbutton_myPosts.TabIndex = 20;
+            this.button_myPostsbutton_myPosts.Text = "My Posts";
+            this.button_myPostsbutton_myPosts.UseVisualStyleBackColor = true;
+            this.button_myPostsbutton_myPosts.Click += new System.EventHandler(this.button_myPostsbutton_myPosts_Click);
+            // 
+            // button_friendsPosts
+            // 
+            this.button_friendsPosts.Enabled = false;
+            this.button_friendsPosts.Location = new System.Drawing.Point(157, 623);
+            this.button_friendsPosts.Name = "button_friendsPosts";
+            this.button_friendsPosts.Size = new System.Drawing.Size(199, 56);
+            this.button_friendsPosts.TabIndex = 21;
+            this.button_friendsPosts.Text = "Friends\' Posts";
+            this.button_friendsPosts.UseVisualStyleBackColor = true;
+            this.button_friendsPosts.Click += new System.EventHandler(this.button_friendsPosts_Click);
+            // 
+            // deletePost_area
+            // 
+            this.deletePost_area.Enabled = false;
+            this.deletePost_area.Location = new System.Drawing.Point(54, 557);
+            this.deletePost_area.Name = "deletePost_area";
+            this.deletePost_area.Size = new System.Drawing.Size(256, 31);
+            this.deletePost_area.TabIndex = 22;
+            // 
+            // button_deletePost
+            // 
+            this.button_deletePost.Enabled = false;
+            this.button_deletePost.Location = new System.Drawing.Point(326, 550);
+            this.button_deletePost.Name = "button_deletePost";
+            this.button_deletePost.Size = new System.Drawing.Size(151, 45);
+            this.button_deletePost.TabIndex = 23;
+            this.button_deletePost.Text = "Delete Post";
+            this.button_deletePost.UseVisualStyleBackColor = true;
+            this.button_deletePost.Click += new System.EventHandler(this.button_deletePost_Click);
+            // 
+            // button_addFriend
+            // 
+            this.button_addFriend.Enabled = false;
+            this.button_addFriend.Location = new System.Drawing.Point(326, 413);
+            this.button_addFriend.Name = "button_addFriend";
+            this.button_addFriend.Size = new System.Drawing.Size(151, 45);
+            this.button_addFriend.TabIndex = 24;
+            this.button_addFriend.Text = "Add Friend";
+            this.button_addFriend.UseVisualStyleBackColor = true;
+            this.button_addFriend.Click += new System.EventHandler(this.button_addFriend_Click);
+            // 
+            // addFriend_area
+            // 
+            this.addFriend_area.Enabled = false;
+            this.addFriend_area.Location = new System.Drawing.Point(54, 420);
+            this.addFriend_area.Name = "addFriend_area";
+            this.addFriend_area.Size = new System.Drawing.Size(256, 31);
+            this.addFriend_area.TabIndex = 25;
+            // 
+            // friends_area
+            // 
+            this.friends_area.Enabled = false;
+            this.friends_area.FormattingEnabled = true;
+            this.friends_area.ItemHeight = 25;
+            this.friends_area.Location = new System.Drawing.Point(54, 207);
+            this.friends_area.Name = "friends_area";
+            this.friends_area.Size = new System.Drawing.Size(256, 179);
+            this.friends_area.TabIndex = 26;
+            // 
+            // button_removeFriend
+            // 
+            this.button_removeFriend.Enabled = false;
+            this.button_removeFriend.Location = new System.Drawing.Point(326, 267);
+            this.button_removeFriend.Name = "button_removeFriend";
+            this.button_removeFriend.Size = new System.Drawing.Size(151, 83);
+            this.button_removeFriend.TabIndex = 27;
+            this.button_removeFriend.Text = "Remove Friend";
+            this.button_removeFriend.UseVisualStyleBackColor = true;
+            this.button_removeFriend.Click += new System.EventHandler(this.button_removeFriend_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(843, 780);
+            this.Controls.Add(this.button_removeFriend);
+            this.Controls.Add(this.friends_area);
+            this.Controls.Add(this.addFriend_area);
+            this.Controls.Add(this.button_addFriend);
+            this.Controls.Add(this.button_deletePost);
+            this.Controls.Add(this.deletePost_area);
+            this.Controls.Add(this.button_friendsPosts);
+            this.Controls.Add(this.button_myPostsbutton_myPosts);
             this.Controls.Add(this.button_get_posts);
             this.Controls.Add(this.button_create_post);
             this.Controls.Add(this.textBox_createPost);
@@ -223,6 +320,14 @@
         private System.Windows.Forms.TextBox textBox_createPost;
         private System.Windows.Forms.Button button_create_post;
         private System.Windows.Forms.Button button_get_posts;
+        private System.Windows.Forms.Button button_myPostsbutton_myPosts;
+        private System.Windows.Forms.Button button_friendsPosts;
+        private System.Windows.Forms.TextBox deletePost_area;
+        private System.Windows.Forms.Button button_deletePost;
+        private System.Windows.Forms.Button button_addFriend;
+        private System.Windows.Forms.TextBox addFriend_area;
+        private System.Windows.Forms.ListBox friends_area;
+        private System.Windows.Forms.Button button_removeFriend;
     }
 }
 
